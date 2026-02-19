@@ -150,4 +150,20 @@ enriched.select([
     'trip_distance', 'fare_amount', 'trip_duration_minutes'
 ])
 
-# vis_sam = enriched.sample(n=100000, seed = 42)
+vis_sam = enriched.sample(n=100000, seed = 42)
+
+st.markdown('<p class="main-header">NYC Taxi Trip Dashboard</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Exploring Yellow Taxi Data from January 2024</p>', unsafe_allow_html=True)
+
+st.divider()
+
+st.subheader('Key Metrics at a Glance')
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        label="Total Trips",
+        value=f"{len(vis_sam):,}",
+        help="Number of trips in our sample (we took 100k from the full dataset)"
+    )
