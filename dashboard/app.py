@@ -98,30 +98,17 @@ def load_lookup():
 taxi_df = load_taxi()
 zones_df = load_lookup()
 
-# # e) removing null from critical columns
-# clean_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
-#                           pl.col('PULocationID').is_not_null()& pl.col('DOLocationID').is_not_null()& pl.col('fare_amount').is_not_null())
+# e) removing null from critical columns
+clean_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
+                          pl.col('PULocationID').is_not_null()& pl.col('DOLocationID').is_not_null()& pl.col('fare_amount').is_not_null())
 
-# # h.e) Rows removed
-# length = len(taxi_df)
-# print(f'Number of rows removed due to null values: {len(taxi_df) - len(clean_df):,}')
+# f) removing invalid rows
+clean_df = (clean_df
+            .filter(pl.col('trip_distance') > 0)
+            .filter(pl.col('trip_distance') <= 50)
+            .filter(pl.col('fare_amount') > 0)
+            .filter(pl.col('fare_amount') <= 500)
+            )
 
-# # f) removing invalid rows
-# clean_df = (clean_df
-#             .filter(pl.col('trip_distance') > 0)
-#             .filter(pl.col('trip_distance') <= 50)
-#             .filter(pl.col('fare_amount') > 0)
-#             .filter(pl.col('fare_amount') <= 500)
-#             )
-
-# # h.f) Rows removed
-# print(f'Number of rows removed due to invalid or outlier values: {length - len(clean_df):,}')
-# length = len(clean_df)
-
-# # g) removing invalid times
-# clean_df = clean_df.filter(pl.col('tpep_pickup_datetime') < pl.col('tpep_dropoff_datetime'))
-
-# # h.g) Rows removed
-# print(f'Number of rows removed due to invalid times: {length - len(clean_df):,}')
-
-# print(f'\nNumber of rows in cleaned dataset: {len(clean_df):,}')
+# g) removing invalid times
+clean_df = clean_df.filter(pl.col('tpep_pickup_datetime') < pl.col('tpep_dropoff_datetime'))
