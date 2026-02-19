@@ -142,13 +142,12 @@ enriched = (enriched
                 .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
                 .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
                 .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
-                # .drop(['LocationID'])
 )
 
-# enriched.select([
-#     'PULocationID', 'pickup_zone', 'pickup_borough',
-#     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
-#     'trip_distance', 'fare_amount', 'trip_duration_minutes'
-# ])
+enriched.select([
+    'PULocationID', 'pickup_zone', 'pickup_borough',
+    'DOLocationID', 'dropoff_zone', 'dropoff_borough',
+    'trip_distance', 'fare_amount', 'trip_duration_minutes'
+])
 
 # vis_sam = enriched.sample(n=100000, seed = 42)
