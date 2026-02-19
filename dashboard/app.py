@@ -112,3 +112,40 @@ clean_df = (clean_df
 
 # g) removing invalid times
 clean_df = clean_df.filter(pl.col('tpep_pickup_datetime') < pl.col('tpep_dropoff_datetime'))
+
+# Adding new columns
+enriched = clean_df.with_columns([
+    # i) trip duration in minutes
+    ((pl.col('tpep_dropoff_datetime')-pl.col('tpep_pickup_datetime')).dt.total_seconds() / 60).alias('trip_duration_minutes'),
+
+])
+
+enriched = enriched.with_columns([
+    # j) trip speed
+    pl.when(pl.col('trip_duration_minutes') > 0)
+    .then((pl.col('trip_distance') / pl.col('trip_duration_minutes')))
+    .otherwise(0)
+    .alias('trip_speed_mph'),
+
+    # k) pickup hour
+    pl.col('tpep_pickup_datetime').dt.hour().alias('pickup_hour'),
+
+    # l) pickup day
+    pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
+])
+
+enriched = (enriched
+                .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
+                .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
+                .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
+                .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
+                # .drop(['LocationID'])
+)
+
+enriched.select([
+    'PULocationID', 'pickup_zone', 'pickup_borough',
+    'DOLocationID', 'dropoff_zone', 'dropoff_borough',
+    'trip_distance', 'fare_amount', 'trip_duration_minutes'
+])
+
+vis_sam = enriched.sample(n=100000, seed = 42)
