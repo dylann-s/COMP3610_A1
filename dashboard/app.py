@@ -27,27 +27,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# download = [
-#     {
-#         'url': 'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet',
-#         'filename': 'yellow_tripdata_2024-01.parquet'
-#     },
-#     {
-#         'url': 'https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv',
-#         'filename': 'taxi_zone_lookup.csv'
-#     }
-# ]
+download = [
+    {
+        'url': 'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet',
+        'filename': 'yellow_tripdata_2024-01.parquet'
+    },
+    {
+        'url': 'https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv',
+        'filename': 'taxi_zone_lookup.csv'
+    }
+]
 
-# for file in download:
-#   print(f'Downloading {file['url']}...')
+for file in download:
+  print(f'Downloading {file['url']}...')
 
-#   response = requests.get(file['url'], stream=True)
+  response = requests.get(file['url'], stream=True)
 
-#   response.raise_for_status()
+  response.raise_for_status()
 
-#   with open(file['filename'], 'wb') as f:
-#     for chunk in response.iter_content(chunk_size=8192):
-#       f.write(chunk)
+  with open(file['filename'], 'wb') as f:
+    for chunk in response.iter_content(chunk_size=8192):
+      f.write(chunk)
 
 @st.cache_data
 def load_taxi():
@@ -95,8 +95,8 @@ def load_lookup():
             st.info("You can download it from: https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet")
             st.stop()
 
-# taxi_df = load_taxi()
-# zones_df = load_lookup()
+taxi_df = load_taxi()
+zones_df = load_lookup()
 
 # # e) removing null from critical columns
 # clean_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
