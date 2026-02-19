@@ -208,3 +208,5 @@ __marimo__/
 
 # Data path
 data/raw
+dashboard/yellow_tripdata_2024-01.parquet
+dashboard/taxi_zone_lookup.csv
