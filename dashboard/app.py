@@ -179,8 +179,8 @@ with col2:
 with col3:
     total_fare = vis_sam['fare_amount'].sum()
     st.metric(
-        label="Total Fare"
-        value=f"${total_fare:.2f}"
+        label="Total Fare",
+        value=f"${total_fare:.2f}",
         help="Total fare for all trips in the visual sample"
     )
 
