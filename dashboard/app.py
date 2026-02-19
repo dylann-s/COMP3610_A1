@@ -137,12 +137,16 @@ enriched = enriched.with_columns([
     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
 ])
 
-enriched = (enriched
-                .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
-                .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
-                .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
-                .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
-)
+if 'pickup_zone' not in enriched.columns and 'dropoff_zone' not in enriched.columns:
+    enriched = (enriched
+        .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
+        .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
+        .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
+        .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
+    )
+    print("Successfully joined zone data")
+else:
+    print("ℹZone columns already exist, skipping join")
 
 enriched.select([
     'PULocationID', 'pickup_zone', 'pickup_borough',
