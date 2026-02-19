@@ -85,15 +85,18 @@ def load_lookup():
     try:
         # First try the local copy in the dashboard folder
         df = pl.read_csv('taxi_zone_lookup.csv')
+        return df
     except FileNotFoundError:
         try:
             # Maybe it's in the parent directory?
             df = pl.read_csv('../taxi_zone_lookup.csv')
+            return df
         except FileNotFoundError:
             # Okay, we're stuck - let the user know what's up
             st.error("Can't find the dataset! Make sure 'taxi_zone_lookup.csv' is in the dashboard folder.")
             st.info("You can download it from: https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet")
             st.stop()
+            return None
 
 taxi_df = load_taxi()
 zones_df = load_lookup()
