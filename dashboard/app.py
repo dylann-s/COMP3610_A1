@@ -159,11 +159,45 @@ st.divider()
 
 st.subheader('Key Metrics at a Glance')
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     st.metric(
         label="Total Trips",
         value=f"{len(vis_sam):,}",
-        help="Number of trips in our sample (we took 100k from the full dataset)"
+        help="Number of trips in our sample (we took 100k from the filtered dataset)"
     )
+
+with col2:
+    avg_fare = vis_sam['fare_amount'].mean()
+    st.metric(
+        label="Average Fare",
+        value=f"${avg_fare:.2f}",
+        help="Mean fare"
+    )
+
+with col3:
+    total_fare = vis_sam['fare_amount'].sum()
+    st.metric(
+        label="Total Fare"
+        value=f"${total_fare:.2f}"
+        help="Total fare for all trips in the visual sample"
+    )
+
+with col4:
+    avg_distance = vis_sam['trip_distance'].mean()
+    st.metric(
+        label="Avg Distance",
+        value=f"{avg_distance:.2f} mi",
+        help="Most NYC taxi trips are pretty short, actually"
+    )
+
+with col5:
+    avg_duration = vis_sam['trip_duration_min'].mean()
+    st.metric(
+        label="Avg Duration",
+        value=f"{avg_duration:.1f} min",
+        help="Includes time stuck in traffic, of course"
+    )
+
+st.divider()
