@@ -127,12 +127,12 @@ enriched = enriched.with_columns([
     .otherwise(0)
     .alias('trip_speed_mph'),
 
-#     # k) pickup hour
-#     pl.col('tpep_pickup_datetime').dt.hour().alias('pickup_hour'),
+    # k) pickup hour
+    pl.col('tpep_pickup_datetime').dt.hour().alias('pickup_hour'),
 
-#     # l) pickup day
-#     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
-# ])
+    # l) pickup day
+    pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
+])
 
 # enriched = (enriched
 #                 .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
@@ -146,6 +146,6 @@ enriched = enriched.with_columns([
 #     'PULocationID', 'pickup_zone', 'pickup_borough',
 #     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
 #     'trip_distance', 'fare_amount', 'trip_duration_minutes'
-])
+# ])
 
 # vis_sam = enriched.sample(n=100000, seed = 42)
