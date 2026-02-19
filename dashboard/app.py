@@ -193,7 +193,7 @@ with col4:
     )
 
 with col5:
-    avg_duration = vis_sam['trip_duration_min'].mean()
+    avg_duration = vis_sam['trip_duration_minutes'].mean()
     st.metric(
         label="Avg Duration",
         value=f"{avg_duration:.1f} min",
