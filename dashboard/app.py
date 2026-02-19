@@ -120,12 +120,12 @@ enriched = clean_df.with_columns([
 
 ])
 
-# enriched = enriched.with_columns([
-#     # j) trip speed
-#     pl.when(pl.col('trip_duration_minutes') > 0)
-#     .then((pl.col('trip_distance') / pl.col('trip_duration_minutes')))
-#     .otherwise(0)
-#     .alias('trip_speed_mph'),
+enriched = enriched.with_columns([
+    # j) trip speed
+    pl.when(pl.col('trip_duration_minutes') > 0)
+    .then((pl.col('trip_distance') / pl.col('trip_duration_minutes')))
+    .otherwise(0)
+    .alias('trip_speed_mph'),
 
 #     # k) pickup hour
 #     pl.col('tpep_pickup_datetime').dt.hour().alias('pickup_hour'),
@@ -146,6 +146,6 @@ enriched = clean_df.with_columns([
 #     'PULocationID', 'pickup_zone', 'pickup_borough',
 #     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
 #     'trip_distance', 'fare_amount', 'trip_duration_minutes'
-# ])
+])
 
 # vis_sam = enriched.sample(n=100000, seed = 42)
