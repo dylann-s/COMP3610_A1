@@ -43,7 +43,7 @@ for file in download:
 
   response = requests.get(file['url'], stream=True)
 
-  response.raisse_for_status()
+  response.raise_for_status()
 
   with open(file['filename'], 'wb') as f:
     for chunk in response.iter_content(chunk_size=8192):
