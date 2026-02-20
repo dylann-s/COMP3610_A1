@@ -143,24 +143,41 @@ taxi_df = taxi_df.with_columns([
     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
 ])
 
-if 'pickup_zone' not in taxi_df.columns and 'dropoff_zone' not in taxi_df.columns:
-    taxi_df = (taxi_df
+vis_sam = taxi_df.sample(n=50000, seed = 42)
+
+if 'pickup_zone' not in vis_sam.columns and 'dropoff_zone' not in vis_sam.columns:
+    vis_sam = (vis_sam
         .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
         .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
         .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
         .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
     )
     print("Successfully joined zone data")
+    zones_df.drop()
 else:
-    print("ℹZone columns already exist, skipping join")
+    print("Zone columns already exist, skipping join")
 
-taxi_df.select([
-    'PULocationID', 'pickup_zone', 'pickup_borough',
-    'DOLocationID', 'dropoff_zone', 'dropoff_borough',
-    'trip_distance', 'fare_amount', 'trip_duration_minutes'
-])
+if 'payment_description' not in vis_sam.columns:
+  payment_lookup = pl.DataFrame({
+    'payment_type': [0, 1, 2, 3, 4],
+    'payment_description': ['Credit Card', 'Cash', 'No Charge', 'Dispute', 'Unknown']
+  })
+  
+  vis_sam = vis_sam.join(
+    payment_lookup,
+    on='payment_type',
+    how='left'
+  )
 
-vis_sam = taxi_df.sample(n=100000, seed = 42)
+  payment_lookup.drop()
+else:
+  print("Payment description column already exists, skipping join")
+
+# vis_sam.select([
+#     'PULocationID', 'pickup_zone', 'pickup_borough',
+#     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
+#     'trip_distance', 'fare_amount', 'trip_duration_minutes'
+# ])
 
 st.markdown('<p class="main-header">NYC Taxi Trip Dashboard</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Exploring Yellow Taxi Data from January 2024</p>', unsafe_allow_html=True)
@@ -211,3 +228,60 @@ with col5:
     )
 
 st.divider()
+
+# ============== SIDEBAR FILTERS ==============
+
+st.sidebar.header("Filters")
+
+# Date range
+st.sidebar.subheader("Date Range")
+min_date = vis_sam['tpep_pickup_datetime'].min()
+max_date = vis_sam['tpep_pickup_datetime'].max()
+
+date_range = st.sidebar.date_input(
+    "Pick your dates:",
+    value=(min_date, max_date),
+    min_value=min_date,
+    max_value=max_date
+)
+
+if isinstance(date_range, tuple) and len(date_range) == 2:
+    start_date, end_date = date_range
+else:
+    start_date = end_date = date_range
+
+hour_range = st.sidebar.slider(
+    "🕐 Hour Range",
+    min_value=0,
+    max_value=23,
+    value=(0, 23),
+    step=1
+)
+
+payment_types = vis_sam.select(pl.col('payment_description').unique()).to_series().to_list()
+payment_types = sorted([p for p in payment_types if p is not None])
+selected_payments = st.sidebar.multiselect(
+    "💳 Payment Types",
+    options=payment_types,
+    default=payment_types
+)
+
+filtered_df = vis_sam.clone()
+
+if len(date_range) == 2:
+    start_date, end_date = date_range
+    filtered_df = filtered_df.filter(
+        (pl.col('tpep_pickup_datetime') >= start_date) &
+        (pl.col('tpep_pickup_datetime') <= end_date)
+    )
+
+# Apply hour filter
+filtered_df = filtered_df.filter(
+    (pl.col('pickup_hour') >= hour_range[0]) & 
+    (pl.col('pickup_hour') <= hour_range[1])
+)
+
+# Apply payment type filter
+if selected_payments:
+    filtered_df = filtered_df.filter(pl.col('payment_description').is_in(selected_payments))
+
