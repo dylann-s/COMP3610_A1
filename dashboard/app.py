@@ -110,11 +110,11 @@ if zones_df is not None:
     print("Deleted zone lookup file")
 
 # e) removing null from critical columns
-clean_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
+taxi_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
                           pl.col('PULocationID').is_not_null()& pl.col('DOLocationID').is_not_null()& pl.col('fare_amount').is_not_null())
 
 # f) removing invalid rows
-clean_df = (clean_df
+taxi_df = (taxi_df
             .filter(pl.col('trip_distance') > 0)
             .filter(pl.col('trip_distance') <= 50)
             .filter(pl.col('fare_amount') > 0)
@@ -122,16 +122,16 @@ clean_df = (clean_df
             )
 
 # g) removing invalid times
-clean_df = clean_df.filter(pl.col('tpep_pickup_datetime') < pl.col('tpep_dropoff_datetime'))
+taxi_df = taxi_df.filter(pl.col('tpep_pickup_datetime') < pl.col('tpep_dropoff_datetime'))
 
 # Adding new columns
-enriched = clean_df.with_columns([
+taxi_df = taxi_df.with_columns([
     # i) trip duration in minutes
     ((pl.col('tpep_dropoff_datetime')-pl.col('tpep_pickup_datetime')).dt.total_seconds() / 60).alias('trip_duration_minutes'),
 
 ])
 
-enriched = enriched.with_columns([
+taxi_df = taxi_df.with_columns([
     # j) trip speed
     pl.when(pl.col('trip_duration_minutes') > 0)
     .then((pl.col('trip_distance') / pl.col('trip_duration_minutes')))
@@ -145,8 +145,8 @@ enriched = enriched.with_columns([
     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
 ])
 
-if 'pickup_zone' not in enriched.columns and 'dropoff_zone' not in enriched.columns:
-    enriched = (enriched
+if 'pickup_zone' not in taxi_df.columns and 'dropoff_zone' not in taxi_df.columns:
+    taxi_df = (taxi_df
         .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
         .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
         .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
@@ -156,13 +156,13 @@ if 'pickup_zone' not in enriched.columns and 'dropoff_zone' not in enriched.colu
 else:
     print("ℹZone columns already exist, skipping join")
 
-enriched.select([
+taxi_df.select([
     'PULocationID', 'pickup_zone', 'pickup_borough',
     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
     'trip_distance', 'fare_amount', 'trip_duration_minutes'
 ])
 
-vis_sam = enriched.sample(n=100000, seed = 42)
+vis_sam = taxi_df.sample(n=100000, seed = 42)
 
 st.markdown('<p class="main-header">NYC Taxi Trip Dashboard</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Exploring Yellow Taxi Data from January 2024</p>', unsafe_allow_html=True)
