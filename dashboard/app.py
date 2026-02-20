@@ -39,13 +39,13 @@ download = [
 ]
 
 for file in download:
-    response = requests.get(file['url'], stream=True)
+  response = requests.get(file['url'], stream=True)
 
-    response.raise_for_status()
+  response.raise_for_status()
 
-with open(file['filename'], 'wb') as f:
+  with open(file['filename'], 'wb') as f:
     for chunk in response.iter_content(chunk_size=8192):
-        f.write(chunk)
+      f.write(chunk)
 
 @st.cache_data
 def load_taxi():
