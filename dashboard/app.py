@@ -301,7 +301,7 @@ with tab1:
         text = 'zone_pickups'
     )
 
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width='stretch')
 
 with tab2:
     st.subheader("Line Graph of Average Fare vs Hour")
@@ -324,7 +324,7 @@ with tab2:
         markers=True
     )
 
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width='stretch')
 
 with tab3:
     st.subheader("Histogram of Trip Distances")
@@ -339,7 +339,7 @@ with tab3:
         labels = {'trip_distance': 'Trip Distance (miles)', 'count': 'Number of Trips'}
     )
 
-    st.plotly_chart(fig3, use_container_width=True)
+    st.plotly_chart(fig3, width='stretch')
 
 with tab4:
     st.subheader("Bar Chart of Paymeent Type Percentages")
@@ -364,7 +364,7 @@ with tab4:
         text='percentage'
     )
 
-    st.plotly_chart(fig4, use_container_width=True)
+    st.plotly_chart(fig4, width='stretch')
 
 with tab5:
     st.subheader("Heatmap for Trip amounts for the day and hours of the weeks")
@@ -380,4 +380,4 @@ with tab5:
         category_orders = {'pickup_day_of_week': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
     )
 
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(fig5, width='stretch')
