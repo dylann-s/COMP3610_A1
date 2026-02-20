@@ -1,4 +1,5 @@
 import polars as pl
+import plotly.express as px
 import streamlit as st 
 import numpy as np
 import requests
@@ -143,7 +144,7 @@ taxi_df = taxi_df.with_columns([
     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
 ])
 
-vis_sam = taxi_df.sample(n=50000, seed = 42)
+vis_sam = taxi_df.sample(n=10000, seed = 42)
 
 if 'pickup_zone' not in vis_sam.columns and 'dropoff_zone' not in vis_sam.columns:
     vis_sam = (vis_sam
@@ -172,12 +173,6 @@ if 'payment_description' not in vis_sam.columns:
   payment_lookup.drop()
 else:
   print("Payment description column already exists, skipping join")
-
-# vis_sam.select([
-#     'PULocationID', 'pickup_zone', 'pickup_borough',
-#     'DOLocationID', 'dropoff_zone', 'dropoff_borough',
-#     'trip_distance', 'fare_amount', 'trip_duration_minutes'
-# ])
 
 st.markdown('<p class="main-header">NYC Taxi Trip Dashboard</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Exploring Yellow Taxi Data from January 2024</p>', unsafe_allow_html=True)
@@ -251,7 +246,7 @@ else:
     start_date = end_date = date_range
 
 hour_range = st.sidebar.slider(
-    "🕐 Hour Range",
+    "Hour Range",
     min_value=0,
     max_value=23,
     value=(0, 23),
@@ -261,7 +256,7 @@ hour_range = st.sidebar.slider(
 payment_types = vis_sam.select(pl.col('payment_description').unique()).to_series().to_list()
 payment_types = sorted([p for p in payment_types if p is not None])
 selected_payments = st.sidebar.multiselect(
-    "💳 Payment Types",
+    "Payment Types",
     options=payment_types,
     default=payment_types
 )
@@ -285,3 +280,104 @@ filtered_df = filtered_df.filter(
 if selected_payments:
     filtered_df = filtered_df.filter(pl.col('payment_description').is_in(selected_payments))
 
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["BarGraph", "LineGraph", "Histogram", "BarGraph2", "Heatmap"])
+
+with tab1:
+    st.subheader("Top 10 Pickup Zones")
+    st.caption("Top 10 Taxi Pickup Zones")
+
+    zone_counts_vis = (filtered_df
+    .group_by('pickup_zone')
+    .agg(pl.len().alias('zone_pickups'))
+    .sort('zone_pickups', descending=True)
+    .head(10)
+)
+
+    fig1 = px.bar(zone_counts_vis,
+        x = 'pickup_zone',
+        y = 'zone_pickups',
+        title = 'Top 10 Pickup Zones for NYC Taxies',
+        labels = {'pickup_zone': 'Pickup Zone', 'zone_cnunts': 'Number of Trips'},
+        text = 'zone_pickups'
+    )
+
+    st.plotly_chart(fig1, use_container_width=True)
+
+with tab2:
+    st.subheader("Line Graph of Average Fare vs Hour")
+    st.caption("Line Graph of average fare")
+
+    avg_fare_vis = (filtered_df
+        .group_by('pickup_hour')
+        .agg(
+            pl.mean('fare_amount').round(2).alias('avg_fare'),
+        )
+        .sort('pickup_hour')
+    )
+
+    fig2 = px.line(
+        avg_fare_vis,
+        x='pickup_hour',
+        y='avg_fare',
+        title='Average Fare per Hour',
+        labels=({'pickup_hour': 'Hour', 'avg_fare': 'Average Fare'}),
+        markers=True
+    )
+
+    st.plotly_chart(fig2, use_container_width=True)
+
+with tab3:
+    st.subheader("Histogram of Trip Distances")
+    st.caption("Histogram showing the amount of trips for each range of distances")
+
+    fig3 = px.histogram(
+        filtered_df,
+        x = 'trip_distance',
+        nbins = 50,
+        range_x=[filtered_df['trip_distance'].min(), filtered_df['trip_distance'].max()],
+        title = 'Distribution of Trip Distances',
+        labels = {'trip_distance': 'Trip Distance (miles)', 'count': 'Number of Trips'}
+    )
+
+    st.plotly_chart(fig3, use_container_width=True)
+
+with tab4:
+    st.subheader("Bar Chart of Paymeent Type Percentages")
+    st.caption("Bar chart showing the percentagage that each payment type occupies")
+
+    pay_type_vis = (filtered_df
+        .group_by('payment_description')
+        .agg(pl.len().alias('count'))
+        .with_columns(
+            (pl.col('count') * 100.0 / pl.sum('count')).round(2).alias('percentage')
+        )
+        .sort('percentage', descending=True)
+    )
+
+
+    fig4 = px.bar(
+        pay_type_vis,
+        x='payment_description',
+        y='percentage',
+        title='Percentage of Payment Types',
+        labels={'payment_description': 'Payment Type', 'percentage': 'Percentage'},
+        text='percentage'
+    )
+
+    st.plotly_chart(fig4, use_container_width=True)
+
+with tab5:
+    st.subheader("Heatmap for Trip amounts for the day and hours of the weeks")
+    st.caption("Histogram showing the amount of trips for each range of distances")
+
+    fig5 = px.density_heatmap(
+        filtered_df,
+        x = 'pickup_hour',
+        y = 'pickup_day_of_week',
+        title = 'Trip Density by Hour and Day of Week',
+        labels = {'pickup_hour': 'Pickup Hour', 'pickup_day_of_week': 'Pickup Day of Week', 'count': 'Number of Trips'},
+        color_continuous_scale = 'agsunset',
+        category_orders = {'pickup_day_of_week': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+    )
+
+    st.plotly_chart(fig5, use_container_width=True)
