@@ -144,27 +144,27 @@ taxi_df = taxi_df.with_columns([
     pl.col('tpep_pickup_datetime').dt.strftime('%A').alias('pickup_day_of_week')
 ])
 
-vis_sam = taxi_df.sample(n=10000, seed = 42)
+taxi_df = taxi_df.sample(n=5000, seed = 42)
 
-if 'pickup_zone' not in vis_sam.columns and 'dropoff_zone' not in vis_sam.columns:
-    vis_sam = (vis_sam
+if 'pickup_zone' not in taxi_df.columns and 'dropoff_zone' not in taxi_df.columns:
+    taxi_df = (taxi_df
         .join(zones_df, left_on='PULocationID', right_on='LocationID', how='left')
         .rename({'Zone': 'pickup_zone', 'Borough': 'pickup_borough'})
         .join(zones_df, left_on='DOLocationID', right_on='LocationID', how='left')
         .rename({'Zone': 'dropoff_zone', 'Borough': 'dropoff_borough'})
     )
     print("Successfully joined zone data")
-    zones_df.drop()
+
 else:
     print("Zone columns already exist, skipping join")
 
-if 'payment_description' not in vis_sam.columns:
+if 'payment_description' not in taxi_df.columns:
   payment_lookup = pl.DataFrame({
     'payment_type': [0, 1, 2, 3, 4],
     'payment_description': ['Credit Card', 'Cash', 'No Charge', 'Dispute', 'Unknown']
   })
   
-  vis_sam = vis_sam.join(
+  taxi_df = taxi_df.join(
     payment_lookup,
     on='payment_type',
     how='left'
@@ -176,6 +176,7 @@ else:
 
 st.markdown('<p class="main-header">NYC Taxi Trip Dashboard</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Exploring Yellow Taxi Data from January 2024</p>', unsafe_allow_html=True)
+st.markdown('A simple dashboard which is able to show some basic statistics on a sample of the greater dataset')
 
 st.divider()
 
@@ -186,12 +187,12 @@ col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     st.metric(
         label="Total Trips",
-        value=f"{len(vis_sam):,}",
+        value=f"{len(taxi_df):,}",
         help="Number of trips in our sample (we took 100k from the filtered dataset)"
     )
 
 with col2:
-    avg_fare = vis_sam['fare_amount'].mean()
+    avg_fare = taxi_df['fare_amount'].mean()
     st.metric(
         label="Average Fare",
         value=f"${avg_fare:.2f}",
@@ -199,7 +200,7 @@ with col2:
     )
 
 with col3:
-    total_fare = vis_sam['fare_amount'].sum()
+    total_fare = taxi_df['fare_amount'].sum()
     st.metric(
         label="Total Fare",
         value=f"${total_fare:.2f}",
@@ -207,19 +208,19 @@ with col3:
     )
 
 with col4:
-    avg_distance = vis_sam['trip_distance'].mean()
+    avg_distance = taxi_df['trip_distance'].mean()
     st.metric(
         label="Avg Distance",
         value=f"{avg_distance:.2f} mi",
-        help="Most NYC taxi trips are pretty short, actually"
+        help="Most NYC taxi trips are short"
     )
 
 with col5:
-    avg_duration = vis_sam['trip_duration_minutes'].mean()
+    avg_duration = taxi_df['trip_duration_minutes'].mean()
     st.metric(
         label="Avg Duration",
         value=f"{avg_duration:.1f} min",
-        help="Includes time stuck in traffic, of course"
+        help="Time stuck in traffic included"
     )
 
 st.divider()
@@ -230,8 +231,8 @@ st.sidebar.header("Filters")
 
 # Date range
 st.sidebar.subheader("Date Range")
-min_date = vis_sam['tpep_pickup_datetime'].min()
-max_date = vis_sam['tpep_pickup_datetime'].max()
+min_date = taxi_df['tpep_pickup_datetime'].min()
+max_date = taxi_df['tpep_pickup_datetime'].max()
 
 date_range = st.sidebar.date_input(
     "Pick your dates:",
@@ -253,7 +254,7 @@ hour_range = st.sidebar.slider(
     step=1
 )
 
-payment_types = vis_sam.select(pl.col('payment_description').unique()).to_series().to_list()
+payment_types = taxi_df.select(pl.col('payment_description').unique()).to_series().to_list()
 payment_types = sorted([p for p in payment_types if p is not None])
 selected_payments = st.sidebar.multiselect(
     "Payment Types",
@@ -261,7 +262,7 @@ selected_payments = st.sidebar.multiselect(
     default=payment_types
 )
 
-filtered_df = vis_sam.clone()
+filtered_df = taxi_df.clone()
 
 if len(date_range) == 2:
     start_date, end_date = date_range
@@ -302,6 +303,7 @@ with tab1:
     )
 
     st.plotly_chart(fig1, width='stretch')
+    st.markdown('This visualisation reveals that the popularito of pickup zones tend to happen in groups. It should also be noted that, minus the JFK Airport, the pickup zone groups tend to happen within localised areas')
 
 with tab2:
     st.subheader("Line Graph of Average Fare vs Hour")
@@ -325,6 +327,7 @@ with tab2:
     )
 
     st.plotly_chart(fig2, width='stretch')
+    st.markdown('From the average fair per hour, it can be seen that there are spikes in the fare around when would be busiest. This would be a result of more people attempting to move around the city (i.e to work/school and vice versa), resulting in a reduction of supply and a spike in demand, this pattern can also be seen around midnight when supply would usually be low.')
 
 with tab3:
     st.subheader("Histogram of Trip Distances")
@@ -340,6 +343,7 @@ with tab3:
     )
 
     st.plotly_chart(fig3, width='stretch')
+    st.markdown('From the Histogram it can be seen that a majority of the Trips taken in NYC are between 0.1 to 3 miles. confirming the use case of taxies being used as last mile transport')
 
 with tab4:
     st.subheader("Bar Chart of Paymeent Type Percentages")
@@ -365,6 +369,7 @@ with tab4:
     )
 
     st.plotly_chart(fig4, width='stretch')
+    st.markdown('The above bar chart shows that ta majority NYC Taxi trips are paid for with cash. wuth the followup being no charge. This indicated that a majority of trip are taken by people that no longer carry cash, or people who choose not to use cash for such payments.')
 
 with tab5:
     st.subheader("Heatmap for Trip amounts for the day and hours of the weeks")
@@ -381,3 +386,4 @@ with tab5:
     )
 
     st.plotly_chart(fig5, width='stretch')
+    st.markdown('This density heatmap sgows that during the week there are minimal trips taken in the early morning, with an increase in trips when the work day would be starting. With the most amount of trips tak4nafter the work day ends presumably for a mojority of people to go home.')
