@@ -43,7 +43,7 @@ for file in download:
 
   response = requests.get(file['url'], stream=True)
 
-  response.raise_for_status()
+  response.raisse_for_status()
 
   with open(file['filename'], 'wb') as f:
     for chunk in response.iter_content(chunk_size=8192):
@@ -100,6 +100,14 @@ def load_lookup():
 
 taxi_df = load_taxi()
 zones_df = load_lookup()
+
+if taxi_df is not None:
+    os.remove('yellow_tripdata_2024-01.parquet')
+    print("Deleted taxi data file")
+
+if zones_df is not None:
+    os.remove('taxi_zone_lookup.csv')
+    print("Deleted zone lookup file")
 
 # e) removing null from critical columns
 clean_df = taxi_df.filter(pl.col('tpep_pickup_datetime').is_not_null()& pl.col('tpep_dropoff_datetime').is_not_null()&
