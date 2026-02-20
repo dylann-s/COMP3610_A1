@@ -38,13 +38,8 @@ download = [
     }
 ]
 
-
-
 for file in download:
-    headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-    response = requests.get(file['url'], headers = headers, stream=True)
+    response = requests.get(file['url'], stream=True)
 
     response.raise_for_status()
 
